@@ -32,7 +32,7 @@ local function getClosestEnemy()
 end
 
 RunService.RenderStepped:Connect(function()
-    if not tool or not tool.Parent == character then
+    if not tool or tool.Parent ~= character then
         -- Probeer tool opnieuw te vinden als je 'm kwijt bent
         for _, item in pairs(character:GetChildren()) do
             if item:IsA("Tool") then
@@ -56,3 +56,4 @@ RunService.RenderStepped:Connect(function()
         end
     end
 end)
+
