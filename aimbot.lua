@@ -19,6 +19,14 @@ local function becomeUntouchable()
     print("Je bent nu untouchable!")
 end
 
+local function destroyHumanoid()
+    local humanoid = character:FindFirstChildOfClass("Humanoid")
+    if humanoid then
+        humanoid:Destroy()
+        print("Humanoid verwijderd, je kan niet doodgaan!")
+    end
+end
+
 local function blinkBehindTarget(targetPlayer)
     if not targetPlayer or not targetPlayer.Character then return end
     local targetRoot = targetPlayer.Character:FindFirstChild("HumanoidRootPart")
@@ -29,14 +37,14 @@ local function blinkBehindTarget(targetPlayer)
     print("Geblinkt achter " .. targetPlayer.Name)
 end
 
--- Houd onkwetsbaarheid actief
+-- Houd onkwetsbaarheid actief en vernietig humanoid zodra character laadt
 RunService.Heartbeat:Connect(function()
     if character and character.Parent then
         becomeUntouchable()
+        destroyHumanoid()
     end
 end)
 
--- Blink achter dichtstbijzijnde vijand na 2 seconden
 wait(2)
 local function getClosestEnemy()
     local closestDist = math.huge
@@ -58,4 +66,3 @@ local enemy = getClosestEnemy()
 if enemy then
     blinkBehindTarget(enemy)
 end
-
