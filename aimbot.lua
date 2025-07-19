@@ -4,78 +4,60 @@ local RunService = game:GetService("RunService")
 local player = Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
 local root = character:WaitForChild("HumanoidRootPart")
-local tool = nil
 
--- Vind je zwaard (Tool)
-local function findTool()
-	for _, item in pairs(character:GetChildren()) do
-		if item:IsA("Tool") then
-			return item
-		end
-	end
-	return nil
-end
-
--- Maak je moeilijker te raken
 local function becomeUntouchable()
-	for _, part in pairs(character:GetDescendants()) do
-		if part:IsA("BasePart") then
-			part.CanCollide = false
-			part.Transparency = 0.3
-		end
-	end
-
-	local humanoid = character:FindFirstChildOfClass("Humanoid")
-	if humanoid then
-		humanoid.Name = "NotAHumanoid"
-	end
+    -- Zet alle parts van je character doorzichtig en onzichtbaar voor bots
+    for _, part in pairs(character:GetChildren()) do
+        if part:IsA("BasePart") then
+            part.CanCollide = false
+            part.Transparency = 0.5
+        end
+    end
+    -- Optioneel: je kan ook tijdelijk je Humanoid onzichtbaar maken voor scripts
+    local humanoid = character:FindFirstChildOfClass("Humanoid")
+    if humanoid then
+        humanoid.Name = "FakeHumanoid" -- verberg je echt Humanoid
+    end
+    print("Je bent nu untouchable!")
 end
 
--- Zoek dichtstbijzijnde vijand
-local function getClosestEnemy()
-	local closestDist = math.huge
-	local closestPlayer = nil
+local function blinkBehindTarget(targetPlayer)
+    if not targetPlayer or not targetPlayer.Character then return end
+    local targetRoot = targetPlayer.Character:FindFirstChild("HumanoidRootPart")
+    if not targetRoot then return end
 
-	for _, plr in pairs(Players:GetPlayers()) do
-		if plr ~= player and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-			local targetRoot = plr.Character.HumanoidRootPart
-			local dist = (targetRoot.Position - root.Position).Magnitude
-			if dist < closestDist and dist < 25 then
-				closestDist = dist
-				closestPlayer = plr
-			end
-		end
-	end
-	return closestPlayer
+    -- Bereken positie 2 studs achter target (gebruik de lookVector van target)
+    local behindPos = targetRoot.CFrame * CFrame.new(0, 0, 2) -- 2 studs achter
+
+    -- Teleporteer jezelf naar die plek
+    root.CFrame = behindPos
+    print("Geblinkt achter " .. targetPlayer.Name)
 end
 
--- Teleport achter je vijand voor instant attack
-local function blinkBehindTarget(targetRoot)
-	local direction = (root.Position - targetRoot.Position).Unit
-	local behind = targetRoot.Position - direction * 2
-	root.CFrame = CFrame.new(behind, targetRoot.Position)
-end
-
--- ⚔️ Main loop
-RunService.RenderStepped:Connect(function()
-	tool = tool or findTool()
-	if not tool then return end
-
-	local target = getClosestEnemy()
-	if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
-		local targetRoot = target.Character.HumanoidRootPart
-
-		-- Teleport achter hem
-		blinkBehindTarget(targetRoot)
-
-		-- Richting + aanval
-		root.CFrame = CFrame.new(root.Position, targetRoot.Position)
-		if tool.Enabled and tool.ToolEquipped then
-			tool:Activate()
-			tool:Activate() -- extra
-		end
-	end
-end)
-
--- Maak jezelf moeilijk te raken
+-- Voorbeeld gebruik
 becomeUntouchable()
+
+-- Blink achter de eerste vijand die je tegenkomt
+local function getClosestEnemy()
+    local closestDist = math.huge
+    local closestPlayer = nil
+
+    for _, plr in pairs(Players:GetPlayers()) do
+        if plr ~= player and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+            local dist = (plr.Character.HumanoidRootPart.Position - root.Position).Magnitude
+            if dist < closestDist then
+                closestDist = dist
+                closestPlayer = plr
+            end
+        end
+    end
+    return closestPlayer
+end
+
+wait(2) -- Wacht even voor teleport
+
+local enemy = getClosestEnemy()
+if enemy then
+    blinkBehindTarget(enemy)
+end
+
